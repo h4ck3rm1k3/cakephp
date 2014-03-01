@@ -81,7 +81,7 @@ class DboSource extends DataSource {
  *
  * @var boolean
  */
-	public $fullDebug = false;
+	public $fullDebug = true;
 
 /**
  * String to hold how many rows were affected by the last SQL operation.
@@ -248,7 +248,7 @@ class DboSource extends DataSource {
 			$config['prefix'] = '';
 		}
 		parent::__construct($config);
-		$this->fullDebug = Configure::read('debug') > 1;
+		#$this->fullDebug = Configure::read('debug') > 1;
 		if (!$this->enabled()) {
 			throw new MissingConnectionException(array(
 				'class' => get_class($this),
@@ -624,6 +624,9 @@ class DboSource extends DataSource {
 		if ($this->hasResult()) {
 			$this->resultSet($this->_result);
 			$resultRow = $this->fetchResult();
+
+            CakeLog::write('debug',"DboSource::fetchrow :". print_r( $resultRow, $return=true));
+
 			if (isset($resultRow[0])) {
 				$this->fetchVirtualField($resultRow);
 			}
@@ -650,6 +653,9 @@ class DboSource extends DataSource {
  * @return boolean|array Array of resultset rows, or false if no rows matched
  */
 	public function fetchAll($sql, $params = array(), $options = array()) {
+
+        CakeLog::write('debug',"DboSource::fetchAll(sql=". $sql);
+
 		if (is_string($options)) {
 			$options = array('modelName' => $options);
 		}
@@ -663,21 +669,34 @@ class DboSource extends DataSource {
 			return $cached;
 		}
 		$result = $this->execute($sql, array(), $params);
+
+
+
 		if ($result) {
 			$out = array();
 
 			if ($this->hasResult()) {
 				$first = $this->fetchRow();
+
+                CakeLog::write('debug',"DboSource::fetchAll first:". print_r( $first, $return=true));
+
 				if ($first) {
 					$out[] = $first;
 				}
 				while ($item = $this->fetchResult()) {
+
+                    CakeLog::write('debug',"DboSource::fetchAll item:". print_r( $item, $return=true));
 					if (isset($item[0])) {
 						$this->fetchVirtualField($item);
 					}
 					$out[] = $item;
 				}
 			}
+            else{
+                CakeLog::write('debug',"DboSource::fetchAll has no result");
+            }
+
+            CakeLog::write('debug',"DboSource::fetchAll out:". print_r( $out, $return=true));          
 
 			if (!is_bool($result) && $cache) {
 				$this->_writeQueryCache($sql, $out, $params);
@@ -917,13 +936,17 @@ class DboSource extends DataSource {
 	public function logQuery($sql, $params = array()) {
 		$this->_queriesCnt++;
 		$this->_queriesTime += $this->took;
-		$this->_queriesLog[] = array(
+        $item = array(
 			'query' => $sql,
 			'params' => $params,
 			'affected' => $this->affected,
 			'numRows' => $this->numRows,
 			'took' => $this->took
 		);
+
+		$this->_queriesLog[] = $item;
+        CakeLog::write('queries',"log query :". print_r( $item, $return=true));
+
 		if (count($this->_queriesLog) > $this->_queriesLogMax) {
 			array_shift($this->_queriesLog);
 		}

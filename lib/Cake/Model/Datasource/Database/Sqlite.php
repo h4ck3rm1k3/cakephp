@@ -139,10 +139,13 @@ class Sqlite extends DboSource {
 	public function listSources($data = null) {
 		$cache = parent::listSources();
 		if ($cache) {
+            CakeLog::write('debug', 'Sqllite::listSources using cache:' . print_r( $cache, $return=true));
 			return $cache;
 		}
 
 		$result = $this->fetchAll("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;", false);
+
+        CakeLog::write('debug', 'Sqllite::listSources result :' . print_r( $result, $return=true));
 
 		if (!$result || empty($result)) {
 			return array();
@@ -152,6 +155,9 @@ class Sqlite extends DboSource {
 		foreach ($result as $table) {
 			$tables[] = $table[0]['name'];
 		}
+
+        CakeLog::write('debug', 'Sqllite::listSources result :' . print_r( $tables, $return=true));
+
 		parent::listSources($tables);
 		return $tables;
 	}
@@ -298,11 +304,16 @@ class Sqlite extends DboSource {
 		//PDO::getColumnMeta is experimental and does not work with sqlite3,
 		//	so try to figure it out based on the querystring
 		$querystring = $results->queryString;
+
+        CakeLog::write('debug',"query string :". print_r( $querystring, $return=true));
+
 		if (stripos($querystring, 'SELECT') === 0) {
 			$last = strripos($querystring, 'FROM');
 			if ($last !== false) {
 				$selectpart = substr($querystring, 7, $last - 8);
 				$selects = String::tokenize($selectpart, ',', '(', ')');
+
+                CakeLog::write('debug',"selects :". print_r( $selects, $return=true));
 			}
 		} elseif (strpos($querystring, 'PRAGMA table_info') === 0) {
 			$selects = array('cid', 'name', 'type', 'notnull', 'dflt_value', 'pk');
@@ -311,7 +322,12 @@ class Sqlite extends DboSource {
 		} elseif (strpos($querystring, 'PRAGMA index_info') === 0) {
 			$selects = array('seqno', 'cid', 'name');
 		}
+
+        CakeLog::write('debug',"selects :". print_r( $selects, $return=true));
+
 		while ($j < $numFields) {
+
+            CakeLog::write('debug',"fields :". print_r( $selects[$j], $return=true));
 			if (!isset($selects[$j])) {
 				$j++;
 				continue;
@@ -343,6 +359,8 @@ class Sqlite extends DboSource {
 			}
 			$j++;
 		}
+
+        CakeLog::write('debug',"map :". print_r( $this->map, $return=true));
 	}
 
 /**
@@ -351,10 +369,24 @@ class Sqlite extends DboSource {
  * @return mixed array with results fetched and mapped to column names or false if there is no results left to fetch
  */
 	public function fetchResult() {
+
+        CakeLog::write('debug',"Database::Sqlite::fetchResult result :". print_r( $this->_result, $return=true));
+
 		if ($row = $this->_result->fetch(PDO::FETCH_NUM)) {
+
+            CakeLog::write('debug',"Database::Sqlite fetchResult :". print_r( $row, $return=true));
+
 			$resultRow = array();
 			foreach ($this->map as $col => $meta) {
+
+                CakeLog::write('debug',"Database::Sqlite fetchResult :". print_r( $meta, $return=true));
 				list($table, $column, $type) = $meta;
+
+                CakeLog::write('debug',"Database::Sqlite fetchResult :". print_r( $table, $return=true));
+                CakeLog::write('debug',"Database::Sqlite fetchResult :". print_r( $column, $return=true));
+                CakeLog::write('debug',"Database::Sqlite fetchResult :". print_r( $type, $return=true));
+
+
 				$resultRow[$table][$column] = $row[$col];
 				if ($type === 'boolean' && $row[$col] !== null) {
 					$resultRow[$table][$column] = $this->boolean($resultRow[$table][$column]);
@@ -362,6 +394,9 @@ class Sqlite extends DboSource {
 			}
 			return $resultRow;
 		}
+        else {
+            CakeLog::write('debug',"Database::Sqlite fetch failed :");
+        }
 		$this->_result->closeCursor();
 		return false;
 	}

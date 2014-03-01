@@ -201,12 +201,18 @@ class CakeSchema extends Object {
 		));
 		$db = ConnectionManager::getDataSource($connection);
 
+        CakeLog::write('debug', 'Schema Connection:' . print_r( $connection, $return=true));
+        CakeLog::write('debug', 'Schema Connection:' . print_r( $db, $return=true));
+
 		if (isset($this->plugin)) {
 			App::uses($this->plugin . 'AppModel', $this->plugin . '.Model');
 		}
 
 		$tables = array();
 		$currentTables = (array)$db->listSources();
+
+        CakeLog::write('debug', 'Schema Current Drivers:' . print_r( PDO::getAvailableDrivers(), $return=true));
+        CakeLog::write('debug', 'Schema Current Tables:' . print_r( $currentTables, $return=true));
 
 		$prefix = null;
 		if (isset($db->config['prefix'])) {
