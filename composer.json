@@ -1,5 +1,6 @@
 {
     "name": "cakephp/cakephp",
+    "version": "2.6.0",
     "description": "The CakePHP framework",
     "type": "library",
     "keywords": ["framework"],
